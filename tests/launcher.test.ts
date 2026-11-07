@@ -187,7 +187,7 @@ describe('CleanMyTV Home', () => {
   it('keeps the location and greeting out of the activity log', async () => {
     const lines: string[] = []
     setSinks((l) => lines.push(l.text), () => {})
-    const change = { greeting: 'Hello Sam', weather_place: 'Dublin', weather_lat: 53.3331, weather_lon: -6.2489, accent: '#2ec4b6' }
+    const change = { greeting: 'Hello Sam', weather_place: 'Dublin', weather_lat: 53.3331, weather_lon: -6.2489, prayer_zone: 'SWK08', accent: '#2ec4b6' }
     try {
       await H.setConfig(change)
       await H.readConfig()
@@ -200,7 +200,7 @@ describe('CleanMyTV Home', () => {
     const text = lines.join('\n')
     expect(text).toContain('#2EC4B6')
     expect(text).toContain('"greeting":"(hidden)"')
-    for (const secret of ['Sam', 'Dublin', '53.3331', '6.2489']) expect(text).not.toContain(secret)
+    for (const secret of ['Sam', 'Dublin', '53.3331', '6.2489', 'SWK08']) expect(text).not.toContain(secret)
     // Short enough to have been logged as a command, which would carry the same values in base64.
     expect(text).not.toContain('set64')
     expect(text).toContain('wallpaper_begin')
@@ -315,6 +315,13 @@ describe('CleanMyTV Home', () => {
     await expect(H.setConfig({ focus: 'sparkle' as never })).rejects.toThrow(/focus/)
     await expect(H.setConfig({ tilt: 'yes' as never })).rejects.toThrow(/tilt/)
     await H.setConfig({ focus: 'glow', name_focus: false, follow_colour: false, pin_focus: false, tilt: false })
+  })
+
+  it('takes a JAKIM prayer zone in capitals, or blank for off', async () => {
+    expect((await H.setConfig({ prayer_zone: ' swk08\n' })).prayer_zone).toBe('SWK08')
+    await expect(H.setConfig({ prayer_zone: 'Kuching' })).rejects.toThrow(/prayer_zone/)
+    await expect(H.setConfig({ prayer_zone: 8 as never })).rejects.toThrow(/prayer_zone/)
+    expect((await H.setConfig({ prayer_zone: '' })).prayer_zone).toBe('')
   })
 
   it('takes weather places and gives now playing its access only with the section', async () => {

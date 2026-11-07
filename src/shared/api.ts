@@ -277,6 +277,8 @@ export interface HomeConfig {
   weather_lat: number
   weather_lon: number
   weather_unit: 'c' | 'f'
+  /** The next prayer time under the weather, from JAKIM e-Solat, by zone code such as "SWK08"; off while blank. */
+  prayer_zone: string
   // Music bars
   visualiser: boolean
   viz_style: 'bars' | 'mirror' | 'wave'

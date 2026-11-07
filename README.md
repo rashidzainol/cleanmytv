@@ -153,7 +153,7 @@ tabs have a live preview of the TV screen at the top.
 | **Layout** | Three layouts: Shelf (the default), Split and Rail. Space above the apps. The now playing, dock, rows, folders and all apps sections, in any order, each one can be hidden. Quick-settings icons: Inputs, Wi-Fi, Bluetooth, Picture & sound, Apps, Screensaver, Search, Music bars, Quick settings, Themes, Fireplace and Settings. Icons the TV can't open are marked "not on this TV". Up to 6 apps as round icons in the same row, like a VPN. Dock and row tile sizes, apps per row, app names (always, focused app only, or off), clock and greeting. An idle screen: after a set time with no button pressed, only the wallpaper and a large clock show. |
 | **Apps, rows & folders** | Dock size, drag to reorder, hide apps, named rows and folders. |
 | **Look & wallpaper** | Themes: 28 looks with their own wallpaper art, three pictures each, saved to and loaded from `.cmtvtheme` files, and Put it back to undo them. Put the themes on the TV to switch them with the remote. App icons: banners, or every logo redrawn in Colour, Mono or Duotone, on wide, square, squircle or round tiles. Accent colour. Focus style (lift, glow, outline or none), with options to lean the tile toward the move, keep it in place while the row slides, and tint the background in the focused app's colour. Your own picture or Bing's picture of the day, darken, background colour, and the sunrise when it changes. A slideshow of up to 12 pictures. Make your own theme from a built-in one. The fireplace: put it on the TV, show it, make it the screensaver or put it behind Home, with its crackle and a turn-off timer. |
-| **Widgets** | Now playing: what any music or video app plays, with play, pause and next. Weather next to the clock for a town you pick, in °C or °F. |
+| **Widgets** | Now playing: what any music or video app plays, with play, pause and next. Weather next to the clock for a town you pick, in °C or °F. The next prayer time and a countdown under it, from JAKIM e-Solat for the zone you pick (Malaysia). |
 | **Music bars** | On or off; bars, mirrored or wave; accent, rainbow or white; peak dots, number of bars, height, opacity and sensitivity. |
 | **Remote buttons** | Find what a remote button sends, then give it a job in every app: open Settings, Inputs, an app, Home, Back, Quick settings, Themes, the fireplace, the theme's next picture, and more. Off until you turn it on. Only the buttons you map are touched. Power, volume and the mic button are usually handled before Android sees them. On Xiaomi TVs, one click makes the Mi button go Home. |
 | **App lock** | A 4 to 6 digit PIN, kept hashed on the TV, and the apps it locks. Optionally Settings, the Play Store and Quick settings too. An unlock lasts until the TV sleeps, 15 minutes, or until another app opens. Locked apps show a small lock on Home, or stay hidden. One switch turns it all off; the PIN and the list stay. |
@@ -211,8 +211,9 @@ itself.
   - The fireplace video and sound sit in Home's folder on the TV's shared storage
     (`Android/data/io.github.wingedpanther.cleanmytv.home/files/fireplace`). ADB can write there, and
     Home reads them without a storage permission.
-  - The only thing it fetches from the internet is the weather, from api.open-meteo.com, every 30
-    minutes while the place is set.
+  - The only things it fetches from the internet are the weather, from api.open-meteo.com, every 30
+    minutes while the place is set, and the prayer times, from www.e-solat.gov.my (JAKIM), after
+    midnight and every six hours while a zone is set. Neither is sent anything but the place or zone.
 - **Your keys.** The app makes its own ADB key in its data folder and signs only with that. It never
   uses `~/.android/adbkey`, which your phones may also trust, and it only logs in to an address you
   picked. Network ADB is plaintext by design, so use it on a network you trust.

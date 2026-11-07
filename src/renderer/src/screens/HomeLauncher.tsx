@@ -9,6 +9,7 @@ import { fetchBingDaily } from '../lib/backgrounds'
 import { findPlaces, type Place } from '../lib/places'
 import { drawWallpaper, paintWallpaper } from '../lib/themes'
 import { BUILT_IN_THEMES, THEME_EXT, THEME_PICTURES, parseTheme, withPicture, type BuiltInTheme, type ThemeArt, type ThemePaint } from '@shared/themes'
+import { PRAYER_ZONE_RE, SARAWAK_ZONES } from '@shared/prayer'
 
 type Tab = 'overview' | 'apps' | 'layout' | 'look' | 'widgets' | 'music' | 'buttons' | 'lock'
 
@@ -1037,6 +1038,8 @@ function WidgetsTab({ cfg, set }: { cfg: HomeConfig; set: SetFn }): ReactNode {
   const [places, setPlaces] = useState<Place[] | null>(null)
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [zoneText, setZoneText] = useState('')
+  const zoneCode = zoneText.trim().toUpperCase()
 
   async function search(): Promise<void> {
     setSearching(true)
@@ -1118,6 +1121,51 @@ function WidgetsTab({ cfg, set }: { cfg: HomeConfig; set: SetFn }): ReactNode {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="card">
+        <h2>Prayer times</h2>
+        <p className="muted">
+          The next prayer, its time and how long to wait, under the weather. The TV gets Malaysia's official times from JAKIM
+          e-Solat for your zone: after midnight and every six hours. Pick a Sarawak zone, or type the code of another zone from
+          e-solat.gov.my.
+        </p>
+        {cfg.prayer_zone ? (
+          <div className="row" style={{ marginBottom: 14 }}>
+            <span>
+              Showing prayer times for zone <b>{cfg.prayer_zone}</b>
+            </span>
+            <button className="btn small ghost" onClick={() => set({ prayer_zone: '' })}>
+              Turn off
+            </button>
+          </div>
+        ) : null}
+        <ul className="place-list">
+          {SARAWAK_ZONES.map((z) => (
+            <li key={z.code}>
+              <button className={cfg.prayer_zone === z.code ? 'btn small' : 'btn small ghost'} onClick={() => set({ prayer_zone: z.code })}>
+                <b>{z.code}</b>
+                <span className="muted">&nbsp;· {z.places}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <form
+          className="row"
+          style={{ marginTop: 14 }}
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (PRAYER_ZONE_RE.test(zoneCode)) {
+              set({ prayer_zone: zoneCode })
+              setZoneText('')
+            }
+          }}
+        >
+          <input type="text" value={zoneText} onChange={(e) => setZoneText(e.target.value)} placeholder="Other zone, e.g. SGR01" style={{ width: 240 }} />
+          <button className="btn" type="submit" disabled={!PRAYER_ZONE_RE.test(zoneCode)}>
+            Use this zone
+          </button>
+        </form>
       </div>
     </>
   )

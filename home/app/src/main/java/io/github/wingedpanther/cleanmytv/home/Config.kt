@@ -74,6 +74,8 @@ data class HomeConfig(
     val weatherLat: Double = 0.0,
     val weatherLon: Double = 0.0,
     val weatherUnit: String = "c", // c, f
+    // Next prayer time next to the weather, from JAKIM e-Solat; off while the zone is blank
+    val prayerZone: String = "", // a JAKIM zone code such as SWK08
     // Music bars
     val visualiser: Boolean = true,
     val vizStyle: String = "bars", // bars, mirror, wave
@@ -132,6 +134,7 @@ data class HomeConfig(
         .put("weather_lat", weatherLat)
         .put("weather_lon", weatherLon)
         .put("weather_unit", weatherUnit)
+        .put("prayer_zone", prayerZone)
         .put("visualiser", visualiser)
         .put("viz_style", vizStyle)
         .put("viz_bars", vizBars)
@@ -144,6 +147,8 @@ data class HomeConfig(
     companion object {
         private val HEX = Regex("^#[0-9A-Fa-f]{6}$")
         private val PKG = Regex("^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+$")
+        /** JAKIM zone codes: three letters for the state, two digits for the zone. */
+        private val ZONE = Regex("^[A-Z]{3}[0-9]{2}$")
 
         private fun hex(c: Long) = "#%06X".format(c and 0xFFFFFF)
         val QUICK = setOf("settings", "wifi", "inputs", "bluetooth", "display", "apps", "sleep", "search", "music", "panel", "themes", "fireplace")
@@ -242,6 +247,7 @@ data class HomeConfig(
                 weatherLat = real("weather_lat", base.weatherLat, 90.0),
                 weatherLon = real("weather_lon", base.weatherLon, 180.0),
                 weatherUnit = choice("weather_unit", base.weatherUnit, setOf("c", "f")),
+                prayerZone = if (o.has("prayer_zone")) o.optString("prayer_zone").trim().uppercase().takeIf { it.isEmpty() || ZONE.matches(it) } ?: base.prayerZone else base.prayerZone,
                 visualiser = bool("visualiser", base.visualiser),
                 vizStyle = choice("viz_style", base.vizStyle, setOf("bars", "mirror", "wave")),
                 vizBars = int("viz_bars", base.vizBars, 8, 64),

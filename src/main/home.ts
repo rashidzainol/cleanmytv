@@ -9,6 +9,7 @@ import { log } from './log'
 import * as T from './tv'
 import { HOME_PKG, OLD_PKG, StockUnknown, addService, detectStock, dropServices, handOver, rememberStock, toSwitchOff } from './launcher'
 import type { HomeButton, HomeConfig, HomeGroup, HomeStatus, InstallResult, KeyPress, QuickId, ThemePackItem, TvApp } from '@shared/api'
+import { PRAYER_ZONE_RE } from '@shared/prayer'
 
 const TASK = 'install'
 const MAIN = `${HOME_PKG}/.MainActivity`
@@ -25,7 +26,7 @@ export const DEFAULTS: HomeConfig = {
   fire_wall: false, fire_sound: true, fire_wall_sound: false, fire_volume: 40, fire_timer: 0,
   slide_minutes: 0, slide_from: 'mine', other_apps: false,
   clock: 'time_date', greeting: '', idle_minutes: 0,
-  weather_place: '', weather_lat: 0, weather_lon: 0, weather_unit: 'c',
+  weather_place: '', weather_lat: 0, weather_lon: 0, weather_unit: 'c', prayer_zone: '',
   visualiser: true, viz_style: 'bars', viz_bars: 32, viz_height: 12, viz_opacity: 85, viz_colour: 'accent', viz_peaks: true, viz_sensitivity: 100
 }
 
@@ -274,10 +275,15 @@ export function clean(o: Record<string, unknown>, lenient = false): Partial<Home
     if (typeof o[k] === 'number' && Number.isFinite(o[k]) && Math.abs(o[k] as number) <= lim) out[k] = Math.round((o[k] as number) * 10000) / 10000
     else bad(`${k} must be a number from -${lim} to ${lim}`)
   }
+  if (o.prayer_zone !== undefined) {
+    const zone = typeof o.prayer_zone === 'string' ? o.prayer_zone.trim().toUpperCase() : null
+    if (zone !== null && (zone === '' || PRAYER_ZONE_RE.test(zone))) out.prayer_zone = zone
+    else bad('prayer_zone must be a JAKIM zone code such as SWK08, or blank')
+  }
   return out as Partial<HomeConfig>
 }
 
-const PRIVATE_SETTINGS = ['greeting', 'weather_place', 'weather_lat', 'weather_lon']
+const PRIVATE_SETTINGS = ['greeting', 'weather_place', 'weather_lat', 'weather_lon', 'prayer_zone']
 
 /** The JSON goes over as base64, so a greeting with quotes or emoji never needs shell quoting. */
 function call(method: string, arg?: string, task = 'theme'): Promise<string> {

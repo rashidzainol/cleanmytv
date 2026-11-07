@@ -43,4 +43,6 @@ dependencies {
     // Drawn icons for the quick-settings bar; R8 keeps only the few used.
     implementation("androidx.compose.material:material-icons-extended")
     testImplementation("junit:junit:4.13.2")
+    // Android's own org.json is a stub in JVM unit tests; this one parses for real.
+    testImplementation("org.json:json:20240303")
 }

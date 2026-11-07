@@ -230,6 +230,16 @@ fun HomeScreen(visualiser: Visualiser, appsVersion: Int, open: androidx.compose.
             delay(if (weather == null) 2 * 60_000L else 30 * 60_000L)
         }
     }
+    var prayer by remember { mutableStateOf<PrayerDay?>(null) }
+    LaunchedEffect(cfg.prayerZone) {
+        prayer = null
+        if (cfg.prayerZone.isBlank()) return@LaunchedEffect
+        // A failed refresh keeps the last table; Prayer.refreshIn says when to ask again.
+        while (true) {
+            Prayer.fetch(cfg.prayerZone)?.let { prayer = it }
+            delay(Prayer.refreshIn(prayer != null))
+        }
+    }
 
     val home = Home(apps, cfg)
     val accent = Color(cfg.accent)
@@ -282,7 +292,7 @@ fun HomeScreen(visualiser: Visualiser, appsVersion: Int, open: androidx.compose.
     LaunchedEffect(home.first, cfg.layout) { if (home.first != null) runCatching { first.requestFocus() } }
     var focusColour by remember { mutableStateOf<Color?>(null) }
     val tint by animateColorAsState(focusColour ?: Color.Transparent, tween(600), label = "tint")
-    val ui = Ui(cfg, accent, first, home.first, onFolder = { openFolder = it }, track = track, weather = weather,
+    val ui = Ui(cfg, accent, first, home.first, onFolder = { openFolder = it }, track = track, weather = weather, prayer = prayer,
         onFocusApp = { a -> focusColour = a.colour?.let { Color(it) } }, motion = motion)
 
     Box(
@@ -384,6 +394,7 @@ private class Ui(
     val onFolder: (Pair<String, List<TvApp>>) -> Unit,
     val track: Track? = null,
     val weather: WeatherNow? = null,
+    val prayer: PrayerDay? = null,
     val onFocusApp: (TvApp) -> Unit = {},
     /** False when the TV's animations are off: tiles still lift, without springs, tilt or sheen. */
     val motion: Boolean = true,
@@ -410,6 +421,7 @@ private fun ShelfLayout(home: Home, ui: Ui, quick: List<QuickAction>, onQuick: (
                 Column(horizontalAlignment = Alignment.End) {
                     Clock(cfg, 26.sp, 12.sp, Alignment.End)
                     WeatherLine(ui, 13.sp, Modifier.padding(top = 4.dp))
+                    PrayerLine(ui, 13.sp, Modifier.padding(top = 4.dp))
                     if (quick.isNotEmpty()) {
                         if (cfg.clock != "off") Spacer(Modifier.height(10.dp))
                         Row(Modifier.focusGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { quick.forEach { QuickButton(it, ui, onQuick) } }
@@ -431,6 +443,7 @@ private fun SplitLayout(home: Home, ui: Ui, quick: List<QuickAction>, onQuick: (
             // 46 sp keeps "12:51 PM" on one line in the left third; 12-hour time is the widest.
             Clock(cfg, 46.sp, 15.sp, Alignment.Start)
             WeatherLine(ui, 15.sp, Modifier.padding(top = 6.dp))
+            PrayerLine(ui, 15.sp, Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(14.dp))
             Greeting(cfg, 18.sp)
             Spacer(Modifier.weight(1f))
@@ -468,6 +481,7 @@ private fun RailLayout(home: Home, ui: Ui, quick: List<QuickAction>, onQuick: (Q
             Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = SAFE_X, top = SAFE_Y), verticalAlignment = Alignment.CenterVertically) {
                 Greeting(cfg, 20.sp)
                 Spacer(Modifier.weight(1f))
+                PrayerLine(ui, 13.sp, Modifier.padding(end = 18.dp))
                 WeatherLine(ui, 13.sp, Modifier.padding(end = 18.dp))
                 Clock(cfg, 26.sp, 12.sp, Alignment.End)
             }
@@ -845,6 +859,26 @@ private fun WeatherLine(ui: Ui, size: androidx.compose.ui.unit.TextUnit, modifie
     }
 }
 
+/** The next prayer, its time and how long to wait, in one muted line under the weather. Hidden until a table arrives, and when it is yesterday's. */
+@Composable
+private fun PrayerLine(ui: Ui, size: androidx.compose.ui.unit.TextUnit, modifier: Modifier = Modifier) {
+    val day = ui.prayer ?: return
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    // Tick on the minute, so the countdown changes as the clock does.
+    LaunchedEffect(Unit) { while (true) { delay(60_000L - System.currentTimeMillis() % 60_000L); now = System.currentTimeMillis() } }
+    if (day.date != Prayer.today(now)) return
+    val next = day.next(now) ?: return
+    // JAKIM's times are Malaysian, so they are shown in Malaysian time, in the 12 or 24 hour style the clock uses.
+    val at = remember(next.at) {
+        DateFormat.getTimeInstance(DateFormat.SHORT).apply { timeZone = java.util.TimeZone.getTimeZone("GMT+8") }.format(Date(next.at))
+    }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Image(Icons.Outlined.NightsStay, null, Modifier.size(with(androidx.compose.ui.platform.LocalDensity.current) { size.toDp() * 1.3f }), colorFilter = ColorFilter.tint(MUTED))
+        Spacer(Modifier.width(6.dp))
+        Text("${Prayer.NAMES[next.id]}  $at  ·  ${Prayer.countdown(next.at, now)}", color = MUTED, fontSize = size, fontFamily = CLOCK, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
 /** WMO weather codes, as Open-Meteo reports them, to a drawn icon. */
 private fun weatherIcon(w: WeatherNow): ImageVector = when (w.code) {
     0 -> if (w.day) Icons.Outlined.WbSunny else Icons.Outlined.NightsStay
@@ -956,6 +990,7 @@ private fun IdleClock(ui: Ui, modifier: Modifier) {
     Column(modifier.padding(start = SAFE_X, bottom = SAFE_Y + 12.dp)) {
         Clock(ui.cfg, 64.sp, 18.sp, Alignment.Start)
         WeatherLine(ui, 16.sp, Modifier.padding(top = 8.dp))
+        PrayerLine(ui, 16.sp, Modifier.padding(top = 8.dp))
     }
 }
 

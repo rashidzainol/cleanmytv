@@ -192,6 +192,11 @@ function Clock({ cfg, size, dateSize, align }: { cfg: HomeConfig; size: number; 
           ☁ 14°  16° / 9°  {cfg.weather_place}
         </div>
       )}
+      {cfg.prayer_zone && (
+        <div style={{ fontSize: dateSize, color: '#D7CFC4', fontFamily: 'var(--font)', marginTop: 4 }}>
+          ☾ Zohor  12:00 PM  ·  1h 23m
+        </div>
+      )}
     </div>
   )
 }
